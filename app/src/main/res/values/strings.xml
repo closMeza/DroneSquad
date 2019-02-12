@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Test_App</string>
+    <string name="helloText">New App Lets try this out</string>
+    <string name="buttonText">Change Text</string>
+    <string name="upButton">UP</string>
+    <string name="leftButton">LEFT</string>
+    <string name="rightButton">RIGHT</string>
+    <string name="downButton">DOWN</string>
+</resources>
