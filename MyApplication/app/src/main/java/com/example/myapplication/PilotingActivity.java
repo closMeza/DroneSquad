@@ -42,32 +42,55 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
     public ARDiscoveryDeviceService service;
     public ARDiscoveryDevice device;
 
-    private Button jumHightBt;
-    private Button jumLongBt;
-
+    //The interface that controls the turning
     private SeekBar turnbar;
 
+    //The Button the control the forward movement
     private Button forwardBt;
+    //The button that controls the bacwards movement
     private Button backBt;
+    //The button that performs the high jump
+    private Button jumHightBt;
+    //The Button that performs the long jump.
+    private Button jumLongBt;
 
+    //The red text that will represent the battery levels
     private TextView batteryLabel;
 
+    //Alerts like "disconnecting" or "connecting"
     private AlertDialog alertDialog;
 
+    //The video stream.
     private ImageView imgView;
 
-        @Override
+    //When you first boot up this "activity" this function is called/
+    //Think of it like a contructor for an activity
+    @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        //So save the last activity you performed. In this case it would be
+        //The drone selection screen.
         super.onCreate(savedInstanceState);
+
+        //parse the XML file for the layout of this activity.
+        //Essentially draw the ui
         setContentView(R.layout.activity_piloting);
 
+        //This is a bunch of initializations for the buttons and ui stuff.
         initIHM();
+        //Initialize the imgview video frame
         imgView = (ImageView) findViewById(R.id.imageView);
+        //Get the intent that this was called with
         Intent intent = getIntent();
+        //Get that extra parameter that was intended to be passed from the previous activity.
+
+        //In this case that would be the drone object that has all the info we need to
+        //connect to the drone
+        //The service object holds all of this.
         service = intent.getParcelableExtra(EXTRA_DEVICE_SERVICE);
 
         //create the device
+        //This has to do with connecting the wifi broadcasted by the drone to this application.
         try
         {
             device = new ARDiscoveryDevice();
@@ -82,6 +105,13 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
             Log.e(TAG, "Error: " + e.getError());
         }
 
+        //Once the wifi device has been set up
+        //Link the wifi signal to the deviceController object that will handle the controls.
+        //SO in order
+        //1.inputs from the app call member functions from the deviceController object
+        //2.deviceController functions will then use the "device" object and it's member functions
+        //to send the signal over the wifi
+        //3. The drone on the ground will move and respond based on the signals it received..
         if (device != null)
         {
             try
@@ -98,6 +128,10 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
         }
     }
 
+    //This member function will link objects from this class, to the drawn ui elements on the application
+    //This will include getting inputs from buttons.
+    //Initializing the battery levels.
+    //and preparing the seekbar for the turning.
     private void initIHM ()
     {
         jumHightBt = (Button) findViewById(R.id.jumHightBt);
@@ -165,10 +199,12 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+
                 seekBar.setProgress(50,true);
                 return;
             }
         });
+        //The Forward Button. Duh
         forwardBt = (Button) findViewById(R.id.forwardBt);
         forwardBt.setOnTouchListener(new View.OnTouchListener()
         {
@@ -177,19 +213,26 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
             {
                 switch (event.getAction())
                 {
+                    //If you are pressing the button DOWN
+                    // Then this even triggers
                     case MotionEvent.ACTION_DOWN:
                         v.setPressed(true);
-                        if (deviceController != null)
-                        {
+                        if (deviceController != null){
+                            //Set the speed to 50 granted this should be modified when we implement the
+                            //variable speed control.
                             deviceController.getFeatureJumpingSumo().setPilotingPCMDSpeed((byte) 50);
                             deviceController.getFeatureJumpingSumo().setPilotingPCMDFlag((byte) 1);
                         }
                         break;
-
+                    //IF you release the button.
+                    // Then the action is up
                     case MotionEvent.ACTION_UP:
+                        //This adds that little shadow over the button indicating you pushed the button.
                         v.setPressed(false);
+                        //If you are connected to a device
                         if (deviceController != null)
                         {
+                            //Set the speed to 0
                             deviceController.getFeatureJumpingSumo().setPilotingPCMDSpeed((byte) 0);
                             deviceController.getFeatureJumpingSumo().setPilotingPCMDFlag((byte) 0);
                         }
@@ -235,7 +278,7 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
                 return true;
             }
         });
-
+        //Link this textview object called battery label to the textview object in the activity_piloting.xml
         batteryLabel = (TextView) findViewById(R.id.batteryLabel);
     }
 
@@ -245,11 +288,14 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
         super.onStart();
 
         //start the deviceController
+        //If it aint null that means it is connected to something.
         if (deviceController != null)
         {
+            //This is a popup window that will cover a majority of the screen
             final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(PilotingActivity.this);
 
             // set title
+            //Let the user know that we are connection
             alertDialogBuilder.setTitle("Connecting ...");
 
 
@@ -257,15 +303,19 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
             alertDialog = alertDialogBuilder.create();
             alertDialog.show();
 
+            //This isnt really an error. THis will get a state of the program
             ARCONTROLLER_ERROR_ENUM error = deviceController.start();
 
+            //If it is NOT ok, then we close this activity and go to the previous activity.
+            //For unexpected disconnects.
             if (error != ARCONTROLLER_ERROR_ENUM.ARCONTROLLER_OK)
             {
                 finish();
             }
         }
     }
-
+    //This is called whenever we hit the back button, home button, or anything that interrupts the execution of this program.
+    //calls, other events that override activities.
     private void stopDeviceController()
     {
         if (deviceController != null)
@@ -294,6 +344,7 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
     }
 
     @Override
+    //Whenever you hit the home button.
     protected void onStop()
     {
         if (deviceController != null)
@@ -305,11 +356,13 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
     }
 
     @Override
+    //Whenever you hit the back button
     public void onBackPressed()
     {
         stopDeviceController();
     }
 
+    //Function to update the battery.
     public void onUpdateBattery(final int percent) {
         runOnUiThread(new Runnable() {
             @Override
@@ -394,7 +447,8 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
         }
     }
 
-    //This doesnt do anything in our program, but we need to provide a definition so this is a stub
+    //This doesnt do anything in our program, but we need to provide a definition or else this will not compile
+    // so this is just a stub
     //Just gives the controller the ok so it doenst crash.
     @Override
     public ARCONTROLLER_ERROR_ENUM configureDecoder(ARDeviceController deviceController, ARControllerCodec codec)
@@ -402,8 +456,9 @@ public class PilotingActivity extends Activity implements ARDeviceControllerList
         return ARCONTROLLER_ERROR_ENUM.ARCONTROLLER_OK;
     }
 
-    //This basically takes the data from the camera in as a bitmap(and array of bits). Then imageview is used to basically provide the
-    //"Frame" in which the video is shown. FrameDisplay will be the object that will actually play
+    //This basically takes the data from the camera in as a bitmap(and array of bits).
+    // Then imageview is used to basically provide the "Frame"
+    // in which the video is shown. FrameDisplay will be the object that will actually play
     //the images in a manner that will produce a live video feed.
     //ERROR_ENUM is the return type. But in reality it doesnt return an error.
     // It return the "ok" to let the program know that the controller is still good.

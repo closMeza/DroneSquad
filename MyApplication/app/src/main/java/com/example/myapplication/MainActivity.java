@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements ARDiscoveryServic
                         }
                         break;
                     case MotionEvent.ACTION_UP:
-                        v.setPressed(false);
                         if (droneSelected!=-1)
                         {
 
