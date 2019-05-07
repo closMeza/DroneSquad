@@ -10,10 +10,13 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Button;
 
 import com.parrot.arsdk.ARSDK;
 import com.parrot.arsdk.ardiscovery.ARDISCOVERY_PRODUCT_ENUM;
@@ -35,7 +38,9 @@ public class MainActivity extends AppCompatActivity implements ARDiscoveryServic
     static{
         ARSDK.loadSDKLibs();
     }
+
     private ListView listView;
+    private Button connect_button;
     private List<ARDiscoveryDeviceService> deviceList;
     private String[] deviceNameList;
 
@@ -55,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements ARDiscoveryServic
         initServiceConnection();
 
         listView = (ListView)findViewById(R.id.list_of_drones);
+        connect_button = (Button)findViewById(R.id.Connect);
 
         deviceList = new ArrayList<ARDiscoveryDeviceService>();
         deviceNameList = new String[]{};
@@ -66,20 +72,46 @@ public class MainActivity extends AppCompatActivity implements ARDiscoveryServic
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                view.setPressed(true);
                 droneSelected = i;
-                //Move this stuff into the execution of the connect button on touch.
-                //ARDiscoveryDeviceService service = deviceList.get(i);
-                //Intent intent = new Intent(MainActivity.this, JSactivity.class);
-                //intent.putExtra(JSactivity.EXTRA_DEVICE_SERVICE,service);
+                System.out.printf("The drone selected was %d", i);
+            }
+        });
+        connect_button.setOnTouchListener(new View.OnTouchListener(){
+            @Override
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                switch (event.getAction())
+                {
+                    case MotionEvent.ACTION_DOWN:
+                        v.setPressed(true);
+                        if (droneSelected!=-1)
+                        {
+                            ARDiscoveryDeviceService service = deviceList.get(droneSelected);
+                            Intent intent = new Intent(MainActivity.this,PilotingActivity.class);
+                            intent.putExtra(PilotingActivity.EXTRA_DEVICE_SERVICE,service);
+                            startActivity(intent);
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        v.setPressed(false);
+                        if (droneSelected!=-1)
+                        {
 
-                //startActivity(intent);
+                        }
+                        break;
+
+                    default:
+
+                        break;
+                }
+
+                return true;
             }
         });
 
 
-
     }
-
     private void initBroadcastReceiver()
     {
         ardiscoveryServicesDevicesListUpdatedReceiver = new ARDiscoveryServicesDevicesListUpdatedReceiver(this);
